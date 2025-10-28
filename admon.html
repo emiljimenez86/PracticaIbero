@@ -28,6 +28,103 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAD6oUP9v1UBinjrf7Rrc1kvWCMP3XFKnQ",
+            authDomain: "practicaprofesional-77c8b.firebaseapp.com",
+            projectId: "practicaprofesional-77c8b",
+            storageBucket: "practicaprofesional-77c8b.appspot.com",
+            messagingSenderId: "319289282005",
+            appId: "1:319289282005:web:your-app-id"
+        };
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        // Función para iniciar sesión con Google
+        window.signInWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                console.log('Usuario autenticado:', user);
+                updateAuthUI(user);
+            } catch (error) {
+                console.error('Error al iniciar sesión:', error);
+                alert('Error al iniciar sesión: ' + error.message);
+            }
+        };
+        
+        // Función para cerrar sesión
+        window.signOutUser = async function() {
+            try {
+                await signOut(auth);
+                updateAuthUI(null);
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        };
+        
+        // Función para actualizar la UI según el estado de autenticación
+        function updateAuthUI(user) {
+            const authSection = document.getElementById('authSection');
+            const adminContent = document.getElementById('adminContent');
+            
+            if (user) {
+                // Usuario autenticado
+                authSection.innerHTML = `
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <img src="${user.photoURL || 'https://via.placeholder.com/40'}" 
+                                     alt="Avatar" class="rounded-circle me-3" width="40" height="40">
+                                <div>
+                                    <h5 class="mb-0">¡Bienvenido, ${user.displayName || user.email}!</h5>
+                                    <small>${user.email}</small>
+                                </div>
+                                <div class="ms-auto">
+                                    <button class="btn btn-outline-light btn-sm" onclick="signOutUser()">
+                                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                adminContent.style.display = 'block';
+            } else {
+                // Usuario no autenticado
+                authSection.innerHTML = `
+                    <div class="card bg-dark text-white mb-4">
+                        <div class="card-body text-center">
+                            <h4 class="mb-3">
+                                <i class="fas fa-lock me-2"></i>
+                                Acceso Administrativo
+                            </h4>
+                            <p class="mb-4">Inicia sesión con tu cuenta de Google para acceder al panel de administración</p>
+                            <button class="btn btn-primary btn-lg" onclick="signInWithGoogle()">
+                                <i class="fab fa-google me-2"></i>
+                                Continuar con Google
+                            </button>
+                        </div>
+                    </div>
+                `;
+                adminContent.style.display = 'none';
+            }
+        }
+        
+        // Escuchar cambios en el estado de autenticación
+        onAuthStateChanged(auth, (user) => {
+            updateAuthUI(user);
+        });
+    </script>
 </head>
 <body>
     <div class="container-fluid mt-4 px-2 px-md-4">
@@ -39,6 +136,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Sección de Autenticación -->
+        <div id="authSection">
+            <!-- El contenido se cargará dinámicamente aquí -->
+        </div>
+
+        <!-- Contenido Administrativo (se oculta hasta autenticarse) -->
+        <div id="adminContent">
 
         <!-- Gestión de Clientes -->
         <div class="card bg-dark text-white mb-4">
@@ -430,6 +535,7 @@
                 </div>
             </div>
         </div>
+        </div> <!-- Cierre del div adminContent -->
     </div>
 
     <!-- Modal de Cierre Diario -->
